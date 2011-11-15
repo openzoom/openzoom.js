@@ -3,6 +3,40 @@ CANVAS_WIDTH = 800
 CANVAS_HEIGHT = 600
 TILE_URL = 'http://cache.zoom.it/content/1cb_files/8/0_0.png'
 
+# Classes
+class DeepZoomImageDescriptor
+    constructor: (@source, @width, @height, @tileSize, @tileOverlap, @format) ->
+
+    @fromXML: (source, xmlString) ->
+        xml = @parseXML xmlString
+        image = xml.documentElement
+        tileSize = image.getAttribute 'TileSize'
+        tileOverlap = image.getAttribute 'Overlap'
+        format = image.getAttribute 'Format'
+
+        size = image.getElementsByTagName('Size')[0]
+        width = size.getAttribute 'Width'
+        height = size.getAttribute 'Height'
+
+        descriptor = new DeepZoomImageDescriptor source, width, height,
+            tileSize, tileOverlap, format
+        return descriptor
+
+    @parseXML: (xmlString) ->
+        # IE
+        if window.ActiveXObject
+            try
+                xml = new ActiveXObject 'Microsoft.XMLDOM'
+                xml.async = false
+                xml.loadXML xmlString
+        # Other browsers
+        else if window.DOMParser
+            try
+                parser = new DOMParser()
+                xml = parser.parseFromString xmlString, 'text/xml'
+        return xml
+
+
 # Initialize canvas
 canvas = document.getElementById 'image'
 context = canvas.getContext '2d'
