@@ -1,7 +1,19 @@
 # Constants
 CANVAS_WIDTH = 800
 CANVAS_HEIGHT = 600
-TILE_URL = 'http://cache.zoom.it/content/1cb_files/8/0_0.png'
+
+DZI_URL = 'http://cache.zoom.it/content/1cb.dzi'
+DZI_XML = '''
+<?xml version="1.0" encoding="utf-8"?>
+<Image
+    TileSize="254"
+    Overlap="1"
+    Format="png"
+    ServerFormat="Default"
+    xmlns="http://schemas.microsoft.com/deepzoom/2009">
+    <Size Width="6740" Height="4768" />
+</Image>
+'''
 
 # Classes
 class DeepZoomImageDescriptor
@@ -41,6 +53,9 @@ class DeepZoomImageDescriptor
         path = "#{basePath}_files"
         return "#{path}/#{level}/#{column}_#{row}.#{@format}"
 
+# Create DZI descriptor from XML string literal
+dzi = DeepZoomImageDescriptor.fromXML DZI_URL, DZI_XML
+
 # Initialize canvas
 canvas = document.getElementById 'image'
 context = canvas.getContext '2d'
@@ -49,6 +64,6 @@ context.fillRect 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT
 
 # Load and draw tile
 tile = new Image()
-tile.src = TILE_URL
+tile.src = dzi.getTileURL 8, 0, 0
 tile.onload = ->
     context.drawImage tile, 0, 0
