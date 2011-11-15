@@ -36,6 +36,10 @@ class DeepZoomImageDescriptor
                 xml = parser.parseFromString xmlString, 'text/xml'
         return xml
 
+    getTileURL: (level, column, row) ->
+        basePath = @source.substring 0, @source.lastIndexOf '.'
+        path = "#{basePath}_files"
+        return "#{path}/#{level}/#{column}_#{row}.#{@format}"
 
 # Initialize canvas
 canvas = document.getElementById 'image'
