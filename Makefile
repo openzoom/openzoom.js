@@ -5,6 +5,9 @@ COFFEELINT = node_modules/.bin/coffeelint
 source_files := $(shell find lib -type f -name '*.coffee')
 
 
+build:
+	@$(BROWSERIFY) -o lib/openzoom.js lib/openzoom.coffee
+
 watch:
 	@$(BROWSERIFY) -w -o lib/openzoom.js lib/openzoom.coffee
 
@@ -23,4 +26,5 @@ test:
 server:
 	@$(COFFEE) support/server.coffee
 
-.PHONY: watch install clean test server
+
+.PHONY: build watch install clean test server
