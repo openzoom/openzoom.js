@@ -27,4 +27,4 @@ server:
 	@$(COFFEE) support/server.coffee
 
 
-.PHONY: build watch install clean test server
+.PHONY: build watch install clean lint test server
