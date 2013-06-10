@@ -4,23 +4,19 @@ A JavaScript implementation of the [OpenZoom SDK][].
 
 ## Getting Started
 
-1. Install [npm][]:
+1. Install [Node.js][].
+2. Install tools:
 
-        curl http://npmjs.org/install.sh | sh
+        make install
 
-2. Install [CoffeeScript][]:
+3. Run file watcher:
 
-        npm install -g coffee-script
+        make watch
 
-3. Run CoffeeScript file watcher:
-
-        ./oz run
-
-4. Open [index.html](index.html) in your browser.
-
+4. Open [test/index.html](test/index.html) in your browser.
 5. Enjoy.
 
 
-[OpenZoom SDK]: https://github.com/openzoom/sdk/
-[npm]: http://npmjs.org/
 [CoffeeScript]: http://jashkenas.github.com/coffee-script/
+[Node.js]: http://nodejs.org/
+[OpenZoom SDK]: https://github.com/openzoom/sdk/
