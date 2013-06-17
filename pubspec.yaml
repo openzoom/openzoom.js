@@ -1,0 +1,9 @@
+name: openzoom
+version: 0.0.1
+author: Daniel Gasienica
+description: Library for rendering multiscale images
+homepage: http://openzoom.org/
+dependencies:
+  browser: any
+  unittest: any
+  xml: any

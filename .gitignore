@@ -10,3 +10,9 @@
 
 # Node.js
 /node_modules
+
+# Dart
+pubspec.lock
+/packages
+/test/packages
+/web/packages
