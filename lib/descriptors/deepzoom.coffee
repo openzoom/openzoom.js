@@ -11,7 +11,6 @@ class DeepZoomImageDescriptor
 
   _createLevels: (tileWidth, tileHeight, numLevels) ->
     for index in [0...numLevels]
-      console.log numLevels
       size = @_getSize index
       width = size.x
       height = size.y
