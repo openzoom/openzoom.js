@@ -1,30 +1,19 @@
-BROWSERIFY = node_modules/.bin/browserify
-COFFEE = node_modules/.bin/coffee
-COFFEELINT = node_modules/.bin/coffeelint
-
-source_files := $(shell find lib -type f -name '*.coffee')
+DART=dart
+DART2JS=dart2js
+DART2JS_FLAGS='--minify'
 
 
 build:
-	@$(BROWSERIFY) -o lib/openzoom.js lib/openzoom.coffee
-
-watch:
-	@$(BROWSERIFY) -w -o lib/openzoom.js lib/openzoom.coffee
+	@$(DART2JS) $(DART2JS_FLAGS) -o web/openzoom.js web/openzoom.dart
 
 install:
-	@npm install --registry=http://registry.npmjs.org
+	@pub install
 
 clean:
-	@rm lib/openzoom.js
-
-lint:
-	@$(COFFEELINT) $(source_files)
+	@rm web/openzoom.js
 
 test:
-	@open test/index.html
-
-server:
-	@$(COFFEE) support/server.coffee
+	@$(DART) test/openzoom.dart
 
 
-.PHONY: build watch install clean lint test server
+.PHONY: build install clean lint test
