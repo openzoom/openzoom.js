@@ -3,7 +3,7 @@ import 'package:unittest/unittest.dart';
 
 
 void main() {
-  test('DeepZoom', () {
+  test('DeepZoomImageDescriptor.fromXml', () {
     String source = 'test.dzi';
     int width = 2048;
     int height = 1152;
