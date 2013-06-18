@@ -1,22 +1,23 @@
 # openzoom.js
 
-A JavaScript implementation of the [OpenZoom SDK][].
+A Dart implementation of the [OpenZoom][] [SDK][openzoom-sdk] that compiles to
+JavaScript.
 
 ## Getting Started
 
-1. Install [Node.js][].
-2. Install tools:
+1. Install [Dart][].
+2. Install dependencies:
 
         make install
 
-3. Run file watcher:
+3. Compile:
 
-        make watch
+        make build
 
-4. Open [test/index.html](test/index.html) in your browser.
+4. Open [web/openzoom.js.html](web/openzoom.js.html) in your browser.
 5. Enjoy.
 
 
-[CoffeeScript]: http://jashkenas.github.com/coffee-script/
-[Node.js]: http://nodejs.org/
-[OpenZoom SDK]: https://github.com/openzoom/sdk/
+[dart]: http://www.dartlang.org/
+[openzoom]: http://openzoom.org/
+[openzoom-sdk]: https://github.com/openzoom/sdk/
