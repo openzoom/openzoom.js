@@ -6,7 +6,7 @@ import 'package:openzoom/openzoom.dart' as oz;
 const String BACKGROUND_FILL_STYLE = 'rgb(0,0,0)';
 const int LEVEL = 9;
 
-final CanvasElement canvas = query("#image") as CanvasElement;
+final CanvasElement canvas = querySelector("#image") as CanvasElement;
 final CanvasRenderingContext2D context = canvas.context2D;
 final List<Map<String, Object>> dzis = [];
 
