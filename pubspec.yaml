@@ -6,4 +6,4 @@ homepage: http://openzoom.org/
 dependencies:
   browser: any
   unittest: any
-  xml: any
+  xml: ">=2.0.0 <3.0.0"
