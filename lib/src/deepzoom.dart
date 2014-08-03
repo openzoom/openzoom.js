@@ -24,14 +24,20 @@ class DeepZoomImageDescriptor {
   }
 
   factory DeepZoomImageDescriptor.fromXml(String source, String xmlString) {
-    XmlElement image = XML.parse(xmlString);
-    int tileSize = int.parse(image.attributes['TileSize'], radix: 10);
-    int tileOverlap = int.parse(image.attributes['Overlap'], radix: 10);
-    String format = image.attributes['Format'];
+    XmlDocument image = parse(xmlString);
+    Function getAttribute = (node, name) {
+      return node.attributes.singleWhere((attr) => (attr.name.local == name));
+    };
 
-    XmlElement size = image.query('Size')[0];
-    int width = int.parse(size.attributes['Width'], radix: 10);
-    int height = int.parse(size.attributes['Height'], radix: 10);
+    int tileSize = int.parse(getAttribute(image.firstChild, 'TileSize').value,
+        radix: 10);
+    int tileOverlap = int.parse(getAttribute(image.firstChild, 'Overlap').value,
+        radix: 10);
+    String format = getAttribute(image.firstChild, 'Format').value;
+
+    XmlElement size = image.findAllElements('Size').first;
+    int width = int.parse(getAttribute(size, 'Width').value, radix: 10);
+    int height = int.parse(getAttribute(size, 'Height').value, radix: 10);
 
     return new DeepZoomImageDescriptor(source, width, height, tileSize,
                                        tileOverlap, format);
