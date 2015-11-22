@@ -1,11 +1,7 @@
-# Generated JavaScript
-/lib/**.js
-
 # Mac OS X
 .DS_Store
 
-# Sublime Text 2
-/*.sublime-project
+# Sublime Text
 /*.sublime-workspace
 
 # Node.js
