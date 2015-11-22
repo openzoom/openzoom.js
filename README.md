@@ -6,8 +6,8 @@ A JavaScript implementation of the [OpenZoom SDK][].
 
 1. Install [Node.js][].
 2. Install dependencies: `npm install`.
-3. Build project: `npm run build`.
-4. Open [test/index.html](test/index.html) in your browser.
+3. Start dev server: `npm run watch`.
+4. Open <http://localhost:8080/test> in your browser.
 5. Enjoy.
 
 
