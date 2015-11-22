@@ -1,0 +1,49 @@
+{
+  "parser": "babel-eslint",
+  "env": {
+    "browser": true,
+    "commonjs": true,
+    "es6": true
+  },
+  "extends": ["strict"],
+  "ecmaFeatures": {
+    "experimentalObjectRestSpread": true,
+  },
+  // Overrides:
+  "rules": {
+    // We always add a newline after variable declarations, e.g. `require`s:
+    // TODO: Disabled for now due to issues of valid `var` before `if`:
+    "newline-after-var": 0,
+
+    // Disallow use of semicolons:
+    "semi": [2, "never"],
+
+    // Enforce no spaces inside object and array literals:
+    "object-curly-spacing": [2, "never"],
+    "array-bracket-spacing": [2, "never"],
+
+    // Allow, but warn on `TODO`, `FIXME`, etc. comments:
+    "no-warning-comments": [1],
+
+    "id-length": [2, {"min": 3, "exceptions": ["id"]}],
+
+    // Disallow dashes in filenames, i.e. favor `PascalCase` and `camelCase`
+    // over `kebab-case`:
+    "filenames/filenames": [2, "^[a-zA-Z.]+$"],
+
+    // Max line length:
+    "max-len": [2, 80],
+
+    // Identifier formats:
+    "id-match": [2, "^([_a-zA-Z][a-zA-Z0-9]*|[A-Z_]*)$"],
+
+    // Allow `/*eslint … */` overrides:
+    "spaced-comment": [2, "always", {
+      markers: ["eslint-disable", "eslint-enable"]
+    }],
+
+    // We always allow inline comments, e.g. to denote variable
+    // units (milliseconds, seconds, etc.)
+    "no-inline-comments": [0],
+  }
+}

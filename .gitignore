@@ -6,3 +6,9 @@
 
 # Node.js
 /node_modules
+
+# Compiled files
+/lib
+
+# Images
+/images
