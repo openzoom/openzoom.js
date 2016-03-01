@@ -44,6 +44,9 @@
 
     // We always allow inline comments, e.g. to denote variable
     // units (milliseconds, seconds, etc.)
-    "no-inline-comments": [0],
+    "no-inline-comments": 0,
+
+    // Allow any style of function declaration:
+    "func-style": 0,
   }
 }
