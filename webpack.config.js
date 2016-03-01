@@ -23,7 +23,11 @@ module.exports = {
         ],
         test: /\.js$/,
         query: {
-          plugins: ['transform-runtime'],
+          plugins: [
+            ['typecheck', {'disabled': {'production': true}}],
+            'syntax-flow',
+            'transform-flow-strip-types',
+          ],
           presets: ['es2015', 'stage-0'],
         },
       },
