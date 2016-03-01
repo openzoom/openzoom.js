@@ -1,28 +1,41 @@
 /* @flow */
 
+// --- Helpers -----------------------------------------------------------------
+
+const clamp = (value, min, max) => {
+  if (value < min) {
+    return min
+  }
+
+  if (value > max) {
+    return max
+  }
+
+  return value
+}
 
 // --- Setup -------------------------------------------------------------------
 
-const image = document.getElementById('image')
+const scene = document.getElementById('image')
 
-if (!(image instanceof HTMLCanvasElement)) {
-  throw new Error('`image` must be a <canvas>')
+if (!(scene instanceof HTMLCanvasElement)) {
+  throw new Error('`scene` must be a <canvas>')
 }
 
-const context: ?CanvasRenderingContext2D = image.getContext('2d')
+const context: ?CanvasRenderingContext2D = scene.getContext('2d')
 
 if (!context) {
   throw new Error('Couldn’t instantiate canvas context.')
 }
 
 context.fillStyle = 'black'
-context.fillRect(0, 0, image.width, image.height)
+context.fillRect(0, 0, scene.width, scene.height)
 
 // --- State -------------------------------------------------------------------
 
 const history = []
 let state = {
-  levels: []
+  levels: [],
 }
 
 const getState = () => state
@@ -31,17 +44,16 @@ const setState = (newState) => {
   state = newState
 }
 
-const update = (state, action) => {
-  let newState = state
-
+const update = (currentState, action) => {
   switch (action.type) {
-    case 'imageLoaded':
+    case 'imageLoaded': {
       const {image, level: levelIndex} = action.payload
-      const newLevels = [...state.levels]
-      const level = state.levels[levelIndex] || {}
+      const newLevels = [...currentState.levels]
+      const level = currentState.levels[levelIndex] || {}
       newLevels[levelIndex] = {...level, image, loaded: true}
 
-      return {...state, levels: newLevels}
+      return {...currentState, levels: newLevels}
+    }
 
     default:
       throw new Error(`Unknown action type: ${action.type}`)
@@ -50,12 +62,14 @@ const update = (state, action) => {
 
 // --- Preloading --------------------------------------------------------------
 
+/*eslint-disable no-magic-numbers */
 const LEVELS = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+/*eslint-enable no-magic-numbers */
 
 LEVELS.forEach((level) => {
   const image = new Image()
   image.src = `http://content.zoomhub.net/dzis/8_files/${level}/0_0.jpg`
-  image.onload = (event) => {
+  image.onload = () => {
     const newState = update(getState(), {
       type: 'imageLoaded',
       payload: {image, level},
@@ -85,6 +99,7 @@ const step = (timestamp) => {
     const alpha = clamp(elapsedTime / LEVEL_BLEND_DURATION, 0, 1)
     context.globalAlpha = alpha
 
+    /*eslint-disable id-length*/
     const sx = 0
     const sy = 0
     const sw = levelImage.width
@@ -92,15 +107,15 @@ const step = (timestamp) => {
 
     const dx = 0
     const dy = 0
-    const dw = image.width
-    const dh = image.height
+    const dw = scene.width
+    const dh = scene.height
+    /*eslint-enable id-length*/
 
     context.drawImage(levelImage, sx, sy, sw, sh, dx, dy, dw, dh)
 
     if (alpha === 1 && levelIndex < LEVELS.length - 1) {
       lastTimestamp = timestamp
       levelIndex += 1
-      console.log(history)
     }
   }
 
@@ -108,17 +123,3 @@ const step = (timestamp) => {
 }
 
 window.requestAnimationFrame(step)
-
-// --- Helpers -----------------------------------------------------------------
-
-const clamp = (value, min, max) => {
-  if (value < min) {
-    return min
-  }
-
-  if (value > max) {
-    return max
-  }
-
-  return value
-}
