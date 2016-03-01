@@ -4,7 +4,7 @@
   "description": "OpenZoom",
   "author": "Daniel Gasienica <daniel@gasienica.ch>",
   "scripts": {
-    "build": "webpack",
+    "build": "webpack -p",
     "lint": "eslint src/ *.js",
     "watch": "webpack-dev-server --progress --colors --hot --inline"
   },
