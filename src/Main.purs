@@ -28,18 +28,33 @@ type State =
 
 initialState :: State
 initialState =
-  { x : 0.0
-  , step : 10.0
+  { x: 0.0
+  , step: 10.0
+  }
+
+scene ::
+  { x :: Number
+  , y :: Number
+  , width :: Number
+  , height :: Number
+  , boxSize :: Number
+  }
+scene =
+  { x: 0.0
+  , y: 0.0
+  , width: 800.0
+  , height: 800.0
+  , boxSize: 25.0
   }
 
 update :: State -> State
 update state =
-  if state.x >= 800.0 then
-    { x: 799.0
+  if state.x + scene.boxSize > scene.width then
+    { x: scene.width - scene.boxSize
     , step: -state.step
     }
-  else if state.x <= 0.0 then
-    { x: 1.0
+  else if state.x < scene.x then
+    { x: scene.x
     , step: -state.step
     }
   else
@@ -56,11 +71,16 @@ render context state = do
 clearCanvas :: forall e. C.Context2D -> Eff (canvas :: C.CANVAS | e) Unit
 clearCanvas ctx = do
   _ <- C.setFillStyle "#000000" ctx
-  _ <- C.fillRect ctx { x: 0.0, y: 0.0, w: 800.0, h: 800.0 }
+  _ <- C.fillRect ctx { x: 0.0, y: 0.0, w: scene.width, h: scene.height }
   pure unit
 
 drawRect :: forall e. C.Context2D -> State -> Eff (canvas :: C.CANVAS | e) Unit
 drawRect ctx state = do
   _ <- C.setFillStyle "#0088DD" ctx
-  _ <- C.fillRect ctx { x: state.x, y: state.x, w: 25.0, h: 25.0 }
+  _ <- C.fillRect ctx
+        { x: state.x
+        , y: scene.height / 2.0
+        , w: scene.boxSize
+        , h: scene.boxSize
+        }
   pure unit
