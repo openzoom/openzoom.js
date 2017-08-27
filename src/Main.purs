@@ -55,7 +55,7 @@ render context state = do
 
 clearCanvas :: forall e. C.Context2D -> Eff (canvas :: C.CANVAS | e) Unit
 clearCanvas ctx = do
-  _ <- C.setFillStyle "#1B1C1B" ctx
+  _ <- C.setFillStyle "#000000" ctx
   _ <- C.fillRect ctx { x: 0.0, y: 0.0, w: 800.0, h: 800.0 }
   pure unit
 
