@@ -15,25 +15,37 @@ main = do
   mcanvas <- C.getCanvasElementById "scene"
   case mcanvas of
     Just canvas -> do
-                   context <- C.getContext2D canvas
-                   frames <- animationFrame
-                   let game = foldp (const update) initialState frames
-                   runSignal (render context <$> game)
+      context <- C.getContext2D canvas
+      frames <- animationFrame
+      let game = foldp (const update) initialState frames
+      runSignal (render context <$> game)
     Nothing -> pure unit
 
-type State
-  = { pos :: Number, step :: Number }
+type State =
+  { x :: Number
+  , step :: Number
+  }
 
 initialState :: State
-initialState = { pos : 0.0, step : 10.0 }
+initialState =
+  { x : 0.0
+  , step : 10.0
+  }
 
 update :: State -> State
 update state =
-  if state.pos >= 800.0
-  then { pos : 799.0, step : -state.step }
-  else if state.pos <= 0.0
-  then { pos : 1.0, step : -state.step }
-  else { pos : state.pos + state.step, step : state.step }
+  if state.x >= 800.0 then
+    { x: 799.0
+    , step: -state.step
+    }
+  else if state.x <= 0.0 then
+    { x: 1.0
+    , step: -state.step
+    }
+  else
+    { x: state.x + state.step
+    , step: state.step
+    }
 
 render :: forall e. C.Context2D -> State -> Eff (canvas :: C.CANVAS | e) Unit
 render context state = do
