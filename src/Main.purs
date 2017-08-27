@@ -62,5 +62,5 @@ clearCanvas ctx = do
 drawRect :: forall e. C.Context2D -> State -> Eff (canvas :: C.CANVAS | e) Unit
 drawRect ctx state = do
   _ <- C.setFillStyle "#0088DD" ctx
-  _ <- C.fillRect ctx { x: state.pos, y: 400.0, w: 25.0, h: 25.0 }
+  _ <- C.fillRect ctx { x: state.x, y: state.x, w: 25.0, h: 25.0 }
   pure unit
