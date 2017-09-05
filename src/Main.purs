@@ -3,33 +3,67 @@ module Main where
 import Prelude
 
 import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
 import Data.Maybe (Maybe(Just, Nothing))
 import DOM (DOM)
+import DOM.HTML.Types (HTMLImageElement)
 import Graphics.Canvas as C
+import Graphics.Canvas (CANVAS)
 import Signal (foldp, runSignal)
 import Signal.DOM (animationFrame)
+import Data.Int (decimal, toStringAs)
+-- import Data.Number.Format (toString)
 
-main :: forall e. Eff (canvas :: C.CANVAS, dom :: DOM, timer :: TIMER | e) Unit
+type Level =
+  { index :: Int
+  , alpha :: Number
+  , image :: Maybe HTMLImageElement
+  }
+
+defaultLevel :: Level
+defaultLevel =
+  { index : 0
+  , alpha : 0.0
+  , image : Nothing
+  }
+
+data ImagePyramid = ImagePyramid
+  { width :: Int
+  , height :: Int
+  }
+
+main :: forall eff. Eff (canvas :: CANVAS, console :: CONSOLE, dom :: DOM, timer :: TIMER | eff) Unit
 main = do
+  _ <- loadImage (defaultLevel { index = 8 })
   mcanvas <- C.getCanvasElementById "scene"
   case mcanvas of
     Just canvas -> do
       context <- C.getContext2D canvas
       frames <- animationFrame
-      let game = foldp (const update) initialState frames
-      runSignal (render context <$> game)
+      let app = foldp (const update) initialState frames
+      runSignal $ render context <$> app
     Nothing -> pure unit
 
+loadImage :: forall eff. Level -> Eff (canvas :: CANVAS, console :: CONSOLE | eff) Unit
+loadImage level = C.tryLoadImage src callback
+  where
+    src = "http://content.zoomhub.net/dzis/8_files/" <> levelPath <> "/0_0.jpg"
+    levelPath = toStringAs decimal level.index
+    callback mcanvas =
+      case mcanvas of
+        Just canvas -> pure unit
+        Nothing -> pure unit
+
 type State =
-  { x :: Number
-  , step :: Number
+  { levels :: Array Level
+  , alpha :: Number
   }
 
 initialState :: State
 initialState =
-  { x: 0.0
-  , step: 10.0
+  { levels : []
+  , alpha : 0.0
   }
 
 scene ::
@@ -37,50 +71,41 @@ scene ::
   , y :: Number
   , width :: Number
   , height :: Number
-  , boxSize :: Number
   }
 scene =
   { x: 0.0
   , y: 0.0
   , width: 800.0
   , height: 800.0
-  , boxSize: 25.0
   }
 
-update :: State -> State
-update state =
-  if state.x + scene.boxSize > scene.width then
-    { x: scene.width - scene.boxSize
-    , step: -state.step
-    }
-  else if state.x < scene.x then
-    { x: scene.x
-    , step: -state.step
-    }
-  else
-    { x: state.x + state.step
-    , step: state.step
-    }
+data Action =
+    Render
+  | ImageLoaded
 
-render :: forall e. C.Context2D -> State -> Eff (canvas :: C.CANVAS | e) Unit
+update :: State -> State
+update state = state { alpha = clamp 0.0 1.0 (state.alpha + 0.05) }
+
+render :: forall eff. C.Context2D -> State -> Eff (canvas :: CANVAS | eff) Unit
 render context state = do
   clearCanvas context
-  drawRect context state
+  drawImage context state
   pure unit
 
-clearCanvas :: forall e. C.Context2D -> Eff (canvas :: C.CANVAS | e) Unit
+clearCanvas :: forall eff. C.Context2D -> Eff (canvas :: CANVAS | eff) Unit
 clearCanvas ctx = do
   _ <- C.setFillStyle "#000000" ctx
   _ <- C.fillRect ctx { x: 0.0, y: 0.0, w: scene.width, h: scene.height }
   pure unit
 
-drawRect :: forall e. C.Context2D -> State -> Eff (canvas :: C.CANVAS | e) Unit
-drawRect ctx state = do
+drawImage :: forall eff. C.Context2D -> State -> Eff (canvas :: CANVAS | eff) Unit
+drawImage ctx state = do
   _ <- C.setFillStyle "#0088DD" ctx
+  _ <- C.setGlobalAlpha ctx state.alpha
   _ <- C.fillRect ctx
-        { x: state.x
-        , y: scene.height / 2.0
-        , w: scene.boxSize
-        , h: scene.boxSize
+        { x: 0.0
+        , y: 0.0
+        , w: scene.width / 2.0
+        , h: scene.height / 2.0
         }
   pure unit
