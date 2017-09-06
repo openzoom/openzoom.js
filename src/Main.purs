@@ -18,12 +18,12 @@ import Signal.DOM (animationFrame)
 
 -- ADTs
 data ImagePyramid = ImagePyramid
-  { width  :: Int
-  , height :: Int
-  , tileWidth :: Int
-  , tileHeight :: Int
+  { width       :: Int
+  , height      :: Int
+  , tileWidth   :: Int
+  , tileHeight  :: Int
   , tileOverlap :: Int
-  , levels :: Array ImagePyramidLevel
+  , levels      :: Array ImagePyramidLevel
   }
 
 data ImagePyramidLevel = ImagePyramidLevel
@@ -37,12 +37,7 @@ data ImagePyramidLevel = ImagePyramidLevel
 
 data ImagePyramidTile = ImagePyramidTile
   { width  :: Int
-  , bounds ::
-    { x :: Number
-    , y :: Number
-    , width :: Number
-    , height :: Number
-    }
+  , height :: Int
   , row    :: Int
   , column :: Int
   }
@@ -83,39 +78,95 @@ type State =
 initialState :: State
 initialState =
   { image : ImagePyramid
-    { width: 600
-    , height: 600
-    , tileWidth: 200
-    , tileHeight: 200
+    { width: 512
+    , height: 512
+    , tileWidth: 64
+    , tileHeight: 64
     , tileOverlap: 0
     , levels:
         [ ImagePyramidLevel
             { index: 0
-            , width: 600
-            , height: 600
-            , numColumns: 3
-            , numRows: 3
+            , width: 1
+            , height: 1
+            , numColumns: 1
+            , numRows: 1
             , color: rgb 255 128 0
             }
         , ImagePyramidLevel
             { index: 1
-            , width: 400
-            , height: 400
-            , numColumns: 2
-            , numRows: 2
+            , width: 2
+            , height: 2
+            , numColumns: 1
+            , numRows: 1
             , color: rgb 0 128 255
             }
         , ImagePyramidLevel
             { index: 2
-            , width: 200
-            , height: 200
+            , width: 4
+            , height: 4
             , numColumns: 1
             , numRows: 1
             , color: rgb 0 255 0
             }
+        , ImagePyramidLevel
+            { index: 3
+            , width: 8
+            , height: 8
+            , numColumns: 1
+            , numRows: 1
+            , color: rgb 0 0 255
+            }
+        , ImagePyramidLevel
+            { index: 4
+            , width: 16
+            , height: 16
+            , numColumns: 1
+            , numRows: 1
+            , color: rgb 255 0 255
+            }
+        , ImagePyramidLevel
+            { index: 5
+            , width: 32
+            , height: 32
+            , numColumns: 1
+            , numRows: 1
+            , color: rgb 0 128 255
+            }
+        , ImagePyramidLevel
+            { index: 6
+            , width: 64
+            , height: 64
+            , numColumns: 1
+            , numRows: 1
+            , color: rgb 255 128 0
+            }
+        , ImagePyramidLevel
+            { index: 7
+            , width: 128
+            , height: 128
+            , numColumns: 2
+            , numRows: 2
+            , color: rgb 0 255 0
+            }
+        , ImagePyramidLevel
+            { index: 8
+            , width: 256
+            , height: 256
+            , numColumns: 4
+            , numRows: 4
+            , color: rgb 0 0 255
+            }
+        , ImagePyramidLevel
+            { index: 9
+            , width: 512
+            , height: 512
+            , numColumns: 8
+            , numRows: 8
+            , color: rgb 255 0 255
+            }
         ]
     }
-  , levelAlpha: [0.0, 0.0, 0.0]
+  , levelAlpha: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
   , lastRenderTimestamp: 0.0
   }
 
