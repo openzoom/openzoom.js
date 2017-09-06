@@ -7,35 +7,29 @@ import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
 import Data.Maybe (Maybe(Just, Nothing))
 import DOM (DOM)
-import DOM.HTML.Types (HTMLImageElement)
 import Graphics.Canvas as C
 import Graphics.Canvas (CANVAS)
 import Signal (foldp, runSignal)
 import Signal.DOM (animationFrame)
 import Data.Int (decimal, toStringAs)
--- import Data.Number.Format (toString)
 
-type Level =
-  { index :: Int
-  , alpha :: Number
-  , image :: Maybe HTMLImageElement
-  }
-
-defaultLevel :: Level
-defaultLevel =
-  { index : 0
-  , alpha : 0.0
-  , image : Nothing
+data ImagePyramidLevel = ImagePyramidLevel
+  { index  :: Int
+  , width  :: Int
+  , height :: Int
   }
 
 data ImagePyramid = ImagePyramid
-  { width :: Int
+  { width  :: Int
   , height :: Int
+  , tileWidth :: Int
+  , tileHeight :: Int
+  , tileOverlap :: Int
+  , levels :: Array ImagePyramidLevel
   }
 
 main :: forall eff. Eff (canvas :: CANVAS, console :: CONSOLE, dom :: DOM, timer :: TIMER | eff) Unit
 main = do
-  _ <- loadImage (defaultLevel { index = 8 })
   mcanvas <- C.getCanvasElementById "scene"
   case mcanvas of
     Just canvas -> do
@@ -45,8 +39,8 @@ main = do
       runSignal $ render context <$> app
     Nothing -> pure unit
 
-loadImage :: forall eff. Level -> Eff (canvas :: CANVAS, console :: CONSOLE | eff) Unit
-loadImage level = C.tryLoadImage src callback
+loadImage :: forall eff. ImagePyramidLevel -> Eff (canvas :: CANVAS, console :: CONSOLE | eff) Unit
+loadImage (ImagePyramidLevel level) = C.tryLoadImage src callback
   where
     src = "http://content.zoomhub.net/dzis/8_files/" <> levelPath <> "/0_0.jpg"
     levelPath = toStringAs decimal level.index
@@ -56,13 +50,20 @@ loadImage level = C.tryLoadImage src callback
         Nothing -> pure unit
 
 type State =
-  { levels :: Array Level
+  { image :: ImagePyramid
   , alpha :: Number
   }
 
 initialState :: State
 initialState =
-  { levels : []
+  { image : ImagePyramid
+    { width: 800
+    , height: 800
+    , tileWidth: 254
+    , tileHeight: 254
+    , tileOverlap: 1
+    , levels: [ImagePyramidLevel {index: 0, width: 800, height: 800}]
+    }
   , alpha : 0.0
   }
 
