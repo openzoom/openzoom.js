@@ -55,7 +55,7 @@ main = do
     Just canvas -> do
       context <- C.getContext2D canvas
       frames <- animationFrame
-      let app = foldp (\ts state -> update state Render) initialState frames
+      let app = foldp (\ts prevState -> update prevState (Render ts)) initialState frames
       runSignal $ render context <$> app
     Nothing -> pure unit
 
@@ -70,9 +70,14 @@ loadImage (ImagePyramidLevel level) = C.tryLoadImage src callback
         Just canvas -> pure unit
         Nothing -> pure unit
 
+tileBlendDuration :: Number
+tileBlendDuration = 500.0
+
 type State =
-  { image      :: ImagePyramid
-  , levelAlpha :: Array Number
+  { image                       :: ImagePyramid
+  , levelAlpha                  :: Array Number
+  -- See: https://mdn.io/requestAnimationFrame
+  , lastRenderTimestamp :: Number
   }
 
 initialState :: State
@@ -111,14 +116,15 @@ initialState =
         ]
     }
   , levelAlpha: [0.0, 0.0, 0.0]
+  , lastRenderTimestamp: 0.0
   }
 
 scene ::
-  { x :: Number
-  , y :: Number
-  , width :: Number
+  { x      :: Number
+  , y      :: Number
+  , width  :: Number
   , height :: Number
-  , color :: Color
+  , color  :: Color
   }
 scene =
   { x: 0.0
@@ -129,30 +135,33 @@ scene =
   }
 
 data Action =
-    Render
-  | LoadImage
+    Render Number
+  | LoadTile
 
 update :: State -> Action -> State
 update state action = traceShow state.levelAlpha $ \_ -> case action of
-  Render ->
+  Render timestamp ->
     -- Find lowest level with alpha < 1.0
     let (ImagePyramid image) = state.image
-        mLowestTransparentLevelIndex = findIndex (_ < 1.0) state.levelAlpha in
-    case mLowestTransparentLevelIndex of
-      Just lowestIndex ->
-        state { levelAlpha = mapWithIndex (updateLevelAlpha lowestIndex) state.levelAlpha }
-      Nothing ->
-        state
+        mLowestTransparentLevelIndex = findIndex (_ < 1.0) state.levelAlpha
+        newState = case mLowestTransparentLevelIndex of
+          Just lowestIndex ->
+            state { levelAlpha = mapWithIndex (updateLevelAlpha timestamp lowestIndex) state.levelAlpha }
+          Nothing ->
+            state
+      in
+      newState { lastRenderTimestamp = timestamp }
   _ -> state
   where
-    updateLevelAlpha targetIndex index value
-      | index == targetIndex = clamp 0.0 1.0 (value + 0.025)
+    updateLevelAlpha timestamp targetIndex index value
+      | index == targetIndex =
+          clamp 0.0 1.0 (value + (timestamp - state.lastRenderTimestamp) / tileBlendDuration)
       | otherwise = value
 
 render :: forall eff. C.Context2D -> State -> Eff (canvas :: CANVAS | eff) Unit
 render context state = do
   clearCanvas context
-  drawImage context state
+  drawImagePyramid context state
   pure unit
 
 clearCanvas :: forall eff. C.Context2D -> Eff (canvas :: CANVAS | eff) Unit
@@ -161,20 +170,21 @@ clearCanvas ctx = do
   _ <- C.fillRect ctx { x: 0.0, y: 0.0, w: scene.width, h: scene.height }
   pure unit
 
-drawImage :: forall eff. C.Context2D -> State -> Eff (canvas :: CANVAS | eff) Unit
-drawImage ctx state = do
+drawImagePyramid :: forall eff. C.Context2D -> State -> Eff (canvas :: CANVAS | eff) Unit
+drawImagePyramid ctx state = do
     let (ImagePyramid image) = state.image
     -- Draw levels from lowest to highest
     foreachE image.levels \(ImagePyramidLevel level) -> do
       case state.levelAlpha !! level.index of
         Just alpha -> do
-          _ <- C.setFillStyle (toHexString level.color) ctx
+          let scale = scene.width / (toNumber level.width) / 2.0
           _ <- C.setGlobalAlpha ctx alpha
+          _ <- C.setFillStyle (toHexString level.color) ctx
           _ <- C.fillRect ctx
-                { x: (scene.width - toNumber level.width) / 2.0
-                , y: (scene.height - toNumber level.height) / 2.0
-                , w: toNumber level.width
-                , h: toNumber level.height
+                { x: 0.0
+                , y: 0.0
+                , w: scale * toNumber level.width
+                , h: scale * toNumber level.height
                 }
           pure unit
         Nothing ->
