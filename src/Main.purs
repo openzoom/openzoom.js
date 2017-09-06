@@ -171,8 +171,8 @@ drawImage ctx state = do
           _ <- C.setFillStyle (toHexString level.color) ctx
           _ <- C.setGlobalAlpha ctx alpha
           _ <- C.fillRect ctx
-                { x: 0.0
-                , y: 0.0
+                { x: (scene.width - toNumber level.width) / 2.0
+                , y: (scene.height - toNumber level.height) / 2.0
                 , w: toNumber level.width
                 , h: toNumber level.height
                 }
