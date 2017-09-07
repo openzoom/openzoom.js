@@ -117,7 +117,7 @@ drawImagePyramid ctx state = do
       case image.levels !! tile.level of
         Just (ImagePyramidLevel level) -> do
           let scale = scene.width / (Int.toNumber level.width) / 2.0
-              offset = Int.toNumber level.index * 2.0
+              offset = Int.toNumber level.index * 8.0
           _ <- C.setGlobalAlpha ctx 0.1
           _ <- C.setFillStyle (toHexString level.color) ctx
           _ <- C.fillRect ctx

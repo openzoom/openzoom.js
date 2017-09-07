@@ -81,6 +81,7 @@ getTileBounds (ImagePyramid image) levelIndex column row =
     Nothing -> Nothing
 
 -- Test
+scene :: Scene
 scene =
   { x: 0.0
   , y: 0.0
@@ -103,8 +104,8 @@ testImage =
     , levels: 0..maxLevel <#> \index ->
         let size = Int.pow 2 index
             value = Int.toNumber $ (index * 20) `mod` 100
-            h = Math.floor (100.0 - value) * 120.0 / 100.0
-            s = Math.abs (value - 50.0) / 50.0
+            h = Math.floor (100.0 - value * 5.0) * 120.0 / 100.0
+            s = 1.0
             l = 0.5
         in
         ImagePyramidLevel
