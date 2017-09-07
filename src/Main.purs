@@ -2,54 +2,42 @@ module Main where
 
 import Prelude
 
-import Color (Color, rgb, toHexString)
+-- import Data.Generic.Rep
+-- import Data.Generic.Rep.Show (genericShow)
+-- import Data.Map (Map)
+import Color (black, toHexString)
 import Control.Monad.Eff (Eff, foreachE)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
-import Data.Array ((!!), findIndex, mapWithIndex)
-import Data.Int (decimal, toStringAs, toNumber)
+import Data.Array ((!!))
+import Data.Int as Int
 import Data.Maybe (Maybe(Just, Nothing))
-import Debug.Trace (traceShow)
+-- import Debug.Trace (trace, traceShow, traceAny)
 import DOM (DOM)
 import Graphics.Canvas (CANVAS)
 import Graphics.Canvas as C
+-- import Math as Math
 import Signal (foldp, runSignal)
 import Signal.DOM (animationFrame)
-
--- ADTs
-data ImagePyramid = ImagePyramid
-  { width       :: Int
-  , height      :: Int
-  , tileWidth   :: Int
-  , tileHeight  :: Int
-  , tileOverlap :: Int
-  , levels      :: Array ImagePyramidLevel
-  }
-
-data ImagePyramidLevel = ImagePyramidLevel
-  { index      :: Int
-  , width      :: Int
-  , height     :: Int
-  , numRows    :: Int
-  , numColumns :: Int
-  , color      :: Color
-  }
-
-data ImagePyramidTile = ImagePyramidTile
-  { width  :: Int
-  , height :: Int
-  , row    :: Int
-  , column :: Int
-  }
+-- import Signal.Time (every)
+import OpenZoom.Types (getVisibleTiles,
+                       ImagePyramid(ImagePyramid),
+                       ImagePyramidLevel(ImagePyramidLevel),
+                       ImagePyramidTile(ImagePyramidTile),
+                       Scene, testImage)
 
 -- Main
-main :: forall eff. Eff (canvas :: CANVAS, console :: CONSOLE, dom :: DOM, timer :: TIMER | eff) Unit
+type CoreEffects = forall eff. Eff (
+  canvas :: CANVAS, console :: CONSOLE, dom :: DOM, timer :: TIMER | eff) Unit
+
+main :: CoreEffects
 main = do
-  mcanvas <- C.getCanvasElementById "scene"
-  case mcanvas of
+  -- let frames = every 500.0
+  frames <- animationFrame
+  mCanvas <- C.getCanvasElementById "scene"
+  case mCanvas of
     Just canvas -> do
       context <- C.getContext2D canvas
-      frames <- animationFrame
       let app = foldp (\ts prevState -> update prevState (Render ts)) initialState frames
       runSignal $ render context <$> app
     Nothing -> pure unit
@@ -59,9 +47,9 @@ loadImage :: forall eff. ImagePyramidLevel -> Eff (canvas :: CANVAS, console :: 
 loadImage (ImagePyramidLevel level) = C.tryLoadImage src callback
   where
     src = "http://content.zoomhub.net/dzis/8_files/" <> levelPath <> "/0_0.jpg"
-    levelPath = toStringAs decimal level.index
-    callback mcanvas =
-      case mcanvas of
+    levelPath = Int.toStringAs Int.decimal level.index
+    callback mCanvas =
+      case mCanvas of
         Just canvas -> pure unit
         Nothing -> pure unit
 
@@ -69,141 +57,40 @@ tileBlendDuration :: Number
 tileBlendDuration = 500.0
 
 type State =
-  { image                       :: ImagePyramid
-  , levelAlpha                  :: Array Number
+  { image               :: ImagePyramid
+  -- , tileData            :: Map ImagePyramidTile ImagePyramidTileData
   -- See: https://mdn.io/requestAnimationFrame
   , lastRenderTimestamp :: Number
+  , levelAlpha          :: Array Number
+  , targetLevel         :: Int
   }
 
 initialState :: State
 initialState =
-  { image : ImagePyramid
-    { width: 512
-    , height: 512
-    , tileWidth: 64
-    , tileHeight: 64
-    , tileOverlap: 0
-    , levels:
-        [ ImagePyramidLevel
-            { index: 0
-            , width: 1
-            , height: 1
-            , numColumns: 1
-            , numRows: 1
-            , color: rgb 255 128 0
-            }
-        , ImagePyramidLevel
-            { index: 1
-            , width: 2
-            , height: 2
-            , numColumns: 1
-            , numRows: 1
-            , color: rgb 0 128 255
-            }
-        , ImagePyramidLevel
-            { index: 2
-            , width: 4
-            , height: 4
-            , numColumns: 1
-            , numRows: 1
-            , color: rgb 0 255 0
-            }
-        , ImagePyramidLevel
-            { index: 3
-            , width: 8
-            , height: 8
-            , numColumns: 1
-            , numRows: 1
-            , color: rgb 0 0 255
-            }
-        , ImagePyramidLevel
-            { index: 4
-            , width: 16
-            , height: 16
-            , numColumns: 1
-            , numRows: 1
-            , color: rgb 255 0 255
-            }
-        , ImagePyramidLevel
-            { index: 5
-            , width: 32
-            , height: 32
-            , numColumns: 1
-            , numRows: 1
-            , color: rgb 0 128 255
-            }
-        , ImagePyramidLevel
-            { index: 6
-            , width: 64
-            , height: 64
-            , numColumns: 1
-            , numRows: 1
-            , color: rgb 255 128 0
-            }
-        , ImagePyramidLevel
-            { index: 7
-            , width: 128
-            , height: 128
-            , numColumns: 2
-            , numRows: 2
-            , color: rgb 0 255 0
-            }
-        , ImagePyramidLevel
-            { index: 8
-            , width: 256
-            , height: 256
-            , numColumns: 4
-            , numRows: 4
-            , color: rgb 0 0 255
-            }
-        , ImagePyramidLevel
-            { index: 9
-            , width: 512
-            , height: 512
-            , numColumns: 8
-            , numRows: 8
-            , color: rgb 255 0 255
-            }
-        ]
-    }
+  { image: testImage
   , levelAlpha: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
   , lastRenderTimestamp: 0.0
+  , targetLevel: 0
   }
 
-scene ::
-  { x      :: Number
-  , y      :: Number
-  , width  :: Number
-  , height :: Number
-  , color  :: Color
-  }
+scene :: Scene
 scene =
   { x: 0.0
   , y: 0.0
   , width: 800.0
   , height: 800.0
-  , color: rgb 0 0 0
+  , color: black
   }
 
-data Action =
-    Render Number
-  | LoadTile
+data Action = Render Number
 
 update :: State -> Action -> State
-update state action = traceShow state.levelAlpha $ \_ -> case action of
+update state action = case action of
   Render timestamp ->
-    -- Find lowest level with alpha < 1.0
-    let (ImagePyramid image) = state.image
-        mLowestTransparentLevelIndex = findIndex (_ < 1.0) state.levelAlpha
-        newState = case mLowestTransparentLevelIndex of
-          Just lowestIndex ->
-            state { levelAlpha = mapWithIndex (updateLevelAlpha timestamp lowestIndex) state.levelAlpha }
-          Nothing ->
-            state
-      in
-      newState { lastRenderTimestamp = timestamp }
-  _ -> state
+    let (ImagePyramid image) = state.image in
+    state { lastRenderTimestamp = timestamp}
   where
+    updateLevelAlpha :: Number -> Int -> Int -> Number -> Number
     updateLevelAlpha timestamp targetIndex index value
       | index == targetIndex =
           clamp 0.0 1.0 (value + (timestamp - state.lastRenderTimestamp) / tileBlendDuration)
@@ -224,20 +111,23 @@ clearCanvas ctx = do
 drawImagePyramid :: forall eff. C.Context2D -> State -> Eff (canvas :: CANVAS | eff) Unit
 drawImagePyramid ctx state = do
     let (ImagePyramid image) = state.image
-    -- Draw levels from lowest to highest
-    foreachE image.levels \(ImagePyramidLevel level) -> do
-      case state.levelAlpha !! level.index of
-        Just alpha -> do
-          let scale = scene.width / (toNumber level.width) / 2.0
-          _ <- C.setGlobalAlpha ctx alpha
+        tiles = getVisibleTiles scene state.image
+    -- traceAny tiles \_ ->
+    foreachE tiles \(ImagePyramidTile tile) -> do
+      case image.levels !! tile.level of
+        Just (ImagePyramidLevel level) -> do
+          let scale = scene.width / (Int.toNumber level.width) / 2.0
+              offset = Int.toNumber level.index * 2.0
+          _ <- C.setGlobalAlpha ctx 0.1
           _ <- C.setFillStyle (toHexString level.color) ctx
           _ <- C.fillRect ctx
-                { x: 0.0
-                , y: 0.0
-                , w: scale * toNumber level.width
-                , h: scale * toNumber level.height
+                { x: offset + scale * Int.toNumber tile.bounds.x
+                , y: offset + scale * Int.toNumber tile.bounds.y
+                , w: scale * Int.toNumber tile.bounds.width
+                , h: scale * Int.toNumber tile.bounds.height
                 }
           pure unit
+          -- traceAny tile \_ -> pure unit
         Nothing ->
           pure unit
-      pure unit
+          -- trace "no level" \_ -> pure unit
