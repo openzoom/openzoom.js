@@ -26,6 +26,26 @@ data ImagePyramidLevel = ImagePyramidLevel
   , color      :: Color
   }
 
+instance eqImagePyramidTile :: Eq ImagePyramidTile where
+  eq (ImagePyramidTile x) (ImagePyramidTile y) =
+    x.level == y.level &&
+    x.column == y.column &&
+    x.row == y.row
+
+instance showImagePyramidTile :: Show ImagePyramidTile where
+  show (ImagePyramidTile x) = "ImagePyramidTile {"
+    <> " level: " <> show x.level <> ","
+    <> " column: " <> show x.column <>
+    " }"
+
+instance ordImagePyramidTile :: Ord ImagePyramidTile where
+  compare (ImagePyramidTile x) (ImagePyramidTile y) =
+    case compare x.level y.level of
+      EQ -> case compare x.column y.column of
+        EQ -> compare x.row y.row
+        r -> r
+      r -> r
+
 data ImagePyramidTile = ImagePyramidTile
   { level  :: Int
   , bounds :: Bounds
