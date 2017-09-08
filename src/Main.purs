@@ -6,12 +6,11 @@ import Color (black, toHexString)
 import Control.Monad.Eff (Eff, foreachE)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
-import Data.Array ((!!))
+import Data.Array (head, (!!))
 import Data.Int as Int
 import Data.Map as Map
 import Data.Map (Map)
-import Data.Maybe (Maybe(Just, Nothing))
-import Debug.Trace (traceAny)
+import Data.Maybe (fromJust, Maybe(Just, Nothing))
 import DOM (DOM)
 import Graphics.Canvas (CANVAS)
 import Graphics.Canvas as C
@@ -20,6 +19,7 @@ import OpenZoom.Types (getVisibleTiles,
                        ImagePyramidLevel(ImagePyramidLevel),
                        ImagePyramidTile(ImagePyramidTile),
                        Scene, testImage)
+import Partial.Unsafe (unsafePartial)
 import Signal (foldp, runSignal)
 import Signal.DOM (animationFrame)
 
@@ -87,7 +87,7 @@ initialState =
   , tiles:
       Map.insert (mkTile 2) (mkTileData 0.2) $
       Map.insert (mkTile 1) (mkTileData 0.4) $
-      Map.insert (mkTile 0) (mkTileData 0.6) Map.empty
+      Map.insert (mkTile 0) (mkTileData 0.0) Map.empty
   , lastRenderTimestamp: 0.0
   , targetLevel: 0
   }
@@ -106,14 +106,19 @@ data Action = Render Number
 update :: State -> Action -> State
 update state action = case action of
   Render timestamp ->
-    let (ImagePyramid image) = state.image in
-    state { lastRenderTimestamp = timestamp }
+    let (ImagePyramid image) = state.image
+        visibleTiles = getVisibleTiles scene state.image
+        firstTile = unsafePartial (fromJust $ head visibleTiles)
+        tiles' = Map.update (updateAlpha timestamp) firstTile state.tiles
+    in
+    state { lastRenderTimestamp = timestamp, tiles = tiles' }
   where
-    updateLevelAlpha :: Number -> Int -> Int -> Number -> Number
-    updateLevelAlpha timestamp targetIndex index value
-      | index == targetIndex =
-          clamp 0.0 1.0 (value + (timestamp - state.lastRenderTimestamp) / tileBlendDuration)
-      | otherwise = value
+    updateAlpha :: Number -> ImagePyramidTileData -> Maybe ImagePyramidTileData
+    updateAlpha timestamp (ImagePyramidTileData tile) =
+      let dt = timestamp - state.lastRenderTimestamp
+          alpha = clamp 0.0 1.0 (tile.alpha + dt / tileBlendDuration)
+      in
+      Just (ImagePyramidTileData { alpha })
 
 render :: forall eff. C.Context2D -> State -> Eff (canvas :: CANVAS | eff) Unit
 render context state = do
@@ -145,7 +150,6 @@ drawImagePyramid ctx state = do
                 , h: scale * Int.toNumber tile.bounds.height
                 }
           pure unit
-          -- traceAny tile \_ -> pure unit
         _ ->
+          -- Draw error
           pure unit
-          -- trace "no level" \_ -> pure unit

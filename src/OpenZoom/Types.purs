@@ -8,7 +8,7 @@ import Data.Maybe (Maybe(Just, Nothing))
 import Data.Int as Int
 import Math as Math
 
-data ImagePyramid = ImagePyramid
+newtype ImagePyramid = ImagePyramid
   { width       :: Int
   , height      :: Int
   , tileWidth   :: Int
@@ -17,7 +17,7 @@ data ImagePyramid = ImagePyramid
   , levels      :: Array ImagePyramidLevel
   }
 
-data ImagePyramidLevel = ImagePyramidLevel
+newtype ImagePyramidLevel = ImagePyramidLevel
   { index      :: Int
   , width      :: Int
   , height     :: Int
@@ -46,7 +46,7 @@ instance ordImagePyramidTile :: Ord ImagePyramidTile where
         r -> r
       r -> r
 
-data ImagePyramidTile = ImagePyramidTile
+newtype ImagePyramidTile = ImagePyramidTile
   { level  :: Int
   , bounds :: Bounds
   , column :: Int
@@ -74,18 +74,28 @@ type Viewport = Rect Number
 
 getVisibleTiles :: Scene -> ImagePyramid -> Array ImagePyramidTile
 getVisibleTiles s p@(ImagePyramid image) =
-  (flip concatMap) image.levels \(ImagePyramidLevel level) ->
-    (flip concatMap) (0..(level.numColumns - 1)) \column ->
-      (flip mapMaybe) (0..(level.numRows - 1)) \row ->
-        case getTileBounds p level.index column row of
-          Just bounds ->
-            Just $ ImagePyramidTile
-              { level: level.index
-              , bounds
-              , column
-              , row
-              }
-          Nothing -> Nothing
+    case getTileBounds p 0 0 0 of
+      Just bounds ->
+        [ ImagePyramidTile
+            { level: 0
+            , bounds
+            , column: 0
+            , row: 0
+            }
+        ]
+      _ -> []
+  -- (flip concatMap) image.levels \(ImagePyramidLevel level) ->
+  --   (flip concatMap) (0..(level.numColumns - 1)) \column ->
+  --     (flip mapMaybe) (0..(level.numRows - 1)) \row ->
+  --       case getTileBounds p level.index column row of
+  --         Just bounds ->
+  --           Just $ ImagePyramidTile
+  --             { level: level.index
+  --             , bounds
+  --             , column
+  --             , row
+  --             }
+  --         Nothing -> Nothing
 
 getTileBounds :: ImagePyramid -> Int -> Int -> Int -> Maybe Bounds
 getTileBounds (ImagePyramid image) levelIndex column row =
