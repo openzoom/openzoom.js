@@ -14,14 +14,17 @@ import Data.Maybe (fromJust, Maybe(Just, Nothing))
 import DOM (DOM)
 import Graphics.Canvas (CANVAS)
 import Graphics.Canvas as C
-import OpenZoom.Types (getVisibleTiles,
-                       ImagePyramid(ImagePyramid),
-                       ImagePyramidLevel(ImagePyramidLevel),
-                       ImagePyramidTile(ImagePyramidTile),
-                       Scene, testImage)
 import Partial.Unsafe (unsafePartial)
 import Signal (foldp, runSignal)
 import Signal.DOM (animationFrame)
+
+import OpenZoom.Render (getVisibleTiles,
+                        ImagePyramidTileState(ImagePyramidTileState),
+                        tileBlendDuration)
+import OpenZoom.Types (ImagePyramid(ImagePyramid),
+                       ImagePyramidLevel(ImagePyramidLevel),
+                       ImagePyramidTile(ImagePyramidTile),
+                       Scene, testImage)
 
 -- Main
 type CoreEffects = forall eff. Eff (
@@ -50,19 +53,9 @@ loadImage (ImagePyramidLevel level) = C.tryLoadImage src callback
         Just canvas -> pure unit
         Nothing -> pure unit
 
-tileBlendDuration :: Number
-tileBlendDuration = 500.0
-
-newtype ImagePyramidTileData = ImagePyramidTileData
-  { alpha :: Number -- [0, 1]
-  }
-
-instance showImagePyramidTileData :: Show ImagePyramidTileData where
-  show (ImagePyramidTileData x) = "{ alpha: " <> show x.alpha <> " }"
-
 type State =
   { image               :: ImagePyramid
-  , tiles               :: Map ImagePyramidTile ImagePyramidTileData
+  , tiles               :: Map ImagePyramidTile ImagePyramidTileState
   -- See: https://mdn.io/requestAnimationFrame
   , lastRenderTimestamp :: Number
   , targetLevel         :: Int
@@ -78,16 +71,16 @@ mkTile level = ImagePyramidTile
   where
     size = Int.pow 2 level
 
-mkTileData :: Number -> ImagePyramidTileData
-mkTileData alpha = ImagePyramidTileData { alpha }
+mkTileState :: Number -> ImagePyramidTileState
+mkTileState alpha = ImagePyramidTileState { alpha }
 
 initialState :: State
 initialState =
   { image: testImage
   , tiles:
-      Map.insert (mkTile 2) (mkTileData 0.0) $
-      Map.insert (mkTile 1) (mkTileData 0.0) $
-      Map.insert (mkTile 0) (mkTileData 0.0) Map.empty
+      Map.insert (mkTile 2) (mkTileState 0.0) $
+      Map.insert (mkTile 1) (mkTileState 0.0) $
+      Map.insert (mkTile 0) (mkTileState 0.0) Map.empty
   , lastRenderTimestamp: 0.0
   , targetLevel: 0
   }
@@ -113,12 +106,12 @@ update state action = case action of
     in
     state { lastRenderTimestamp = timestamp, tiles = tiles' }
   where
-    updateAlpha :: Number -> ImagePyramidTileData -> Maybe ImagePyramidTileData
-    updateAlpha timestamp (ImagePyramidTileData tile) =
+    updateAlpha :: Number -> ImagePyramidTileState -> Maybe ImagePyramidTileState
+    updateAlpha timestamp (ImagePyramidTileState tile) =
       let dt = timestamp - state.lastRenderTimestamp
           alpha = clamp 0.0 1.0 (tile.alpha + dt / tileBlendDuration)
       in
-      Just (ImagePyramidTileData { alpha })
+      Just (ImagePyramidTileState { alpha })
 
 render :: forall eff. C.Context2D -> State -> Eff (canvas :: CANVAS | eff) Unit
 render context state = do
@@ -138,7 +131,7 @@ drawImagePyramid ctx state = do
         tiles = getVisibleTiles scene state.image
     foreachE tiles \t@(ImagePyramidTile tile) -> do
       case { level: image.levels !! tile.level, tile: Map.lookup t state.tiles } of
-        { level: Just (ImagePyramidLevel level), tile: Just (ImagePyramidTileData tile') } -> do
+        { level: Just (ImagePyramidLevel level), tile: Just (ImagePyramidTileState tile') } -> do
           let scale = scene.width / (Int.toNumber level.width) / 2.0
               offset = Int.toNumber level.index * 8.0
           _ <- C.setGlobalAlpha ctx tile'.alpha

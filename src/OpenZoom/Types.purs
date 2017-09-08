@@ -3,10 +3,12 @@ module OpenZoom.Types where
 import Prelude
 
 import Color (Color, hsl, rgb)
-import Data.Array (mapMaybe, concatMap, (!!), (..))
+import Data.Array ((!!), (..))
 import Data.Maybe (Maybe(Just, Nothing))
 import Data.Int as Int
 import Math as Math
+
+-- TODO: Add constructor functions and hide constructors:
 
 newtype ImagePyramid = ImagePyramid
   { width       :: Int
@@ -71,31 +73,6 @@ type Scene =
   }
 
 type Viewport = Rect Number
-
-getVisibleTiles :: Scene -> ImagePyramid -> Array ImagePyramidTile
-getVisibleTiles s p@(ImagePyramid image) =
-    case getTileBounds p 0 0 0 of
-      Just bounds ->
-        [ ImagePyramidTile
-            { level: 0
-            , bounds
-            , column: 0
-            , row: 0
-            }
-        ]
-      _ -> []
-  -- (flip concatMap) image.levels \(ImagePyramidLevel level) ->
-  --   (flip concatMap) (0..(level.numColumns - 1)) \column ->
-  --     (flip mapMaybe) (0..(level.numRows - 1)) \row ->
-  --       case getTileBounds p level.index column row of
-  --         Just bounds ->
-  --           Just $ ImagePyramidTile
-  --             { level: level.index
-  --             , bounds
-  --             , column
-  --             , row
-  --             }
-  --         Nothing -> Nothing
 
 getTileBounds :: ImagePyramid -> Int -> Int -> Int -> Maybe Bounds
 getTileBounds (ImagePyramid image) levelIndex column row =
