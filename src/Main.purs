@@ -85,8 +85,8 @@ initialState :: State
 initialState =
   { image: testImage
   , tiles:
-      Map.insert (mkTile 2) (mkTileData 0.2) $
-      Map.insert (mkTile 1) (mkTileData 0.4) $
+      Map.insert (mkTile 2) (mkTileData 0.0) $
+      Map.insert (mkTile 1) (mkTileData 0.0) $
       Map.insert (mkTile 0) (mkTileData 0.0) Map.empty
   , lastRenderTimestamp: 0.0
   , targetLevel: 0
