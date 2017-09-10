@@ -2,14 +2,24 @@ module OpenZoom.Render where
 
 import Prelude
 
--- import Data.Array (mapMaybe, concatMap, (!!), (..))
-import Data.Maybe (Maybe(Just, Nothing))
+import Data.Array (mapMaybe, concatMap, uncons, (..))
+import Data.Foldable (any)
+import Data.Map (Map)
+import Data.Map as Map
+import Data.Maybe (fromJust, Maybe(Just, Nothing))
+import Partial.Unsafe (unsafePartial)
 
-import OpenZoom.Types (getTileBounds, ImagePyramid(ImagePyramid),
-  ImagePyramidTile(ImagePyramidTile), Scene)
+import OpenZoom.Types ( getTileBounds
+                      , ImagePyramid(ImagePyramid)
+                      , ImagePyramidLevel(ImagePyramidLevel)
+                      , ImagePyramidTile(ImagePyramidTile)
+                      , Scene
+                      )
 
 tileBlendDuration :: Number
-tileBlendDuration = 2000.0
+tileBlendDuration = 400.0
+
+type ImagePyramidTileStates = Map ImagePyramidTile ImagePyramidTileState
 
 newtype ImagePyramidTileState = ImagePyramidTileState
   { alpha :: Number -- [0, 1]
@@ -18,27 +28,49 @@ newtype ImagePyramidTileState = ImagePyramidTileState
 instance showImagePyramidTileState :: Show ImagePyramidTileState where
   show (ImagePyramidTileState x) = "{ alpha: " <> show x.alpha <> " }"
 
-getVisibleTiles :: Scene -> ImagePyramid -> Array ImagePyramidTile
-getVisibleTiles s p@(ImagePyramid image) =
-    case getTileBounds p 0 0 0 of
-      Just bounds ->
-        [ ImagePyramidTile
-            { level: 0
+-- TODO: Compute visibility of tiles:
+getActiveTiles :: Scene ->
+                  ImagePyramid ->
+                  ImagePyramidTileStates ->
+                  Array ImagePyramidTile
+getActiveTiles scene pyramid@(ImagePyramid image) tiles =
+    go scene pyramid image.levels tiles
+  where
+    go :: Scene ->
+          ImagePyramid ->
+          Array ImagePyramidLevel ->
+          ImagePyramidTileStates ->
+          Array ImagePyramidTile
+    go _ _ [] _ = []
+    go s p levels ts =
+      let { head: l, tail: ls } = unsafePartial (fromJust (uncons levels))
+          levelTiles = getTilesForLevel p l
+          anyTransparent = any (isTransparent ts) levelTiles
+      in
+      case anyTransparent of
+        true -> levelTiles
+        false  -> levelTiles <> go s p ls ts
+
+    isTransparent :: ImagePyramidTileStates -> ImagePyramidTile ->  Boolean
+    isTransparent ts tile =
+      case Map.lookup tile ts of
+        Just (ImagePyramidTileState s) -> s.alpha < 1.0
+        _ -> true
+
+isSingleTileLevel :: ImagePyramidLevel -> Boolean
+isSingleTileLevel (ImagePyramidLevel level) =
+  level.numColumns == 1 && level.numRows == 1
+
+getTilesForLevel :: ImagePyramid -> ImagePyramidLevel -> Array ImagePyramidTile
+getTilesForLevel p (ImagePyramidLevel level) =
+  (flip concatMap) (0..(level.numColumns - 1)) \column ->
+    (flip mapMaybe) (0..(level.numRows - 1)) \row ->
+      case getTileBounds p level.index column row of
+        Just bounds ->
+          Just $ ImagePyramidTile
+            { level: level.index
             , bounds
-            , column: 0
-            , row: 0
+            , column
+            , row
             }
-        ]
-      _ -> []
-  -- (flip concatMap) image.levels \(ImagePyramidLevel level) ->
-  --   (flip concatMap) (0..(level.numColumns - 1)) \column ->
-  --     (flip mapMaybe) (0..(level.numRows - 1)) \row ->
-  --       case getTileBounds p level.index column row of
-  --         Just bounds ->
-  --           Just $ ImagePyramidTile
-  --             { level: level.index
-  --             , bounds
-  --             , column
-  --             , row
-  --             }
-  --         Nothing -> Nothing
+        Nothing -> Nothing

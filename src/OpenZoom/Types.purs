@@ -111,7 +111,7 @@ testImage =
     , levels: (0..maxLevel) <#> \index ->
         let size = Int.pow 2 index
             value = Int.toNumber $ (index * 20) `mod` 100
-            h = Math.floor (100.0 - value * 5.0) * 120.0 / 100.0
+            h = Math.floor (100.0 - value * 5.0) * 60.0 / 100.0
             s = 1.0
             l = 0.5
         in
