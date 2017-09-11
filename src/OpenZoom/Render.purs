@@ -2,7 +2,7 @@ module OpenZoom.Render where
 
 import Prelude
 
-import Data.Array (mapMaybe, concatMap, uncons, (..))
+import Data.Array (filter, mapMaybe, concatMap, uncons, (..))
 import Data.Foldable (any)
 import Data.Map (Map)
 import Data.Map as Map
@@ -23,6 +23,7 @@ type ImagePyramidTileStates = Map ImagePyramidTile ImagePyramidTileState
 
 newtype ImagePyramidTileState = ImagePyramidTileState
   { alpha :: Number -- [0, 1]
+  , image :: Maybe Boolean
   }
 
 instance showImagePyramidTileState :: Show ImagePyramidTileState where
@@ -51,11 +52,22 @@ getActiveTiles scene pyramid@(ImagePyramid image) tiles =
         true -> levelTiles
         false -> levelTiles <> go s p ls ts
 
-    isTransparent :: ImagePyramidTileStates -> ImagePyramidTile ->  Boolean
+    isTransparent :: ImagePyramidTileStates -> ImagePyramidTile -> Boolean
     isTransparent ts tile =
       case Map.lookup tile ts of
         Just (ImagePyramidTileState s) -> s.alpha < 1.0
         _ -> true
+
+getUncachedTiles :: ImagePyramidTileStates ->
+                    Array ImagePyramidTile ->
+                    Array ImagePyramidTile
+getUncachedTiles ts tiles = filter (not <<< hasImage) tiles
+  where
+    hasImage :: ImagePyramidTile -> Boolean
+    hasImage tile =
+      case Map.lookup tile ts of
+        Just (ImagePyramidTileState { image: (Just _), alpha: _ }) -> true
+        _ -> false
 
 isSingleTileLevel :: ImagePyramidLevel -> Boolean
 isSingleTileLevel (ImagePyramidLevel level) =

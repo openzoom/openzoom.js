@@ -6,20 +6,21 @@ import Color (black, complementary, toHexString)
 import Control.Monad.Eff (Eff, foreachE)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
-import Data.Array (elemIndex, (!!))
+import Data.Array (head, elemIndex, (!!))
 import Data.Int as Int
 import Data.Map as Map
 import Data.Maybe (Maybe(Just, Nothing))
-import Debug.Trace (traceAny)
+-- import Debug.Trace (traceAny)
+import Data.Tuple (Tuple(Tuple))
 import DOM (DOM)
 import Graphics.Canvas (CANVAS)
 import Graphics.Canvas as C
--- import Partial.Unsafe (unsafePartial)
 import Signal (foldp, runSignal)
 import Signal.DOM (animationFrame)
 -- import Signal.Time (every)
 
 import OpenZoom.Render ( getActiveTiles
+                       , getUncachedTiles
                        , ImagePyramidTileState(ImagePyramidTileState)
                        , tileBlendDuration
                        , ImagePyramidTileStates
@@ -37,15 +38,24 @@ type CoreEffects = forall eff. Eff (
 
 main :: CoreEffects
 main = do
-  -- let frames = every 500.0
+  -- let frames = every (1000.0 / 60.0)
+  -- let frames = every 5000.0
   frames <- animationFrame
   mCanvas <- C.getCanvasElementById "scene"
   case mCanvas of
     Just canvas -> do
       context <- C.getContext2D canvas
-      let app = foldp (\ts prevState -> update prevState (Render ts)) initialState frames
-      runSignal $ render context <$> app
+      let app = foldp step (Tuple initialState None) frames
+      runSignal $ (\(Tuple s _) -> render context s) <$> app
     Nothing -> pure unit
+  where
+    step :: Number -> Tuple State Action -> Tuple State Action
+    step ts (Tuple s a) =
+      let a' = case a of
+                  None -> Render ts
+                  _    -> a
+      in
+      update s a'
 
 -- Helper
 loadImage :: forall eff. ImagePyramidLevel -> Eff (canvas :: CANVAS, console :: CONSOLE | eff) Unit
@@ -58,7 +68,8 @@ loadImage (ImagePyramidLevel level) = C.tryLoadImage src callback
         Just canvas -> pure unit
         Nothing -> pure unit
 
-type State =
+
+newtype State = State
   { image               :: ImagePyramid
   , tiles               :: ImagePyramidTileStates
   , activeTiles         :: Array ImagePyramidTile
@@ -67,34 +78,10 @@ type State =
   , targetLevel         :: Int
   }
 
-mkTile :: Int -> ImagePyramidTile
-mkTile level = ImagePyramidTile
-  { level
-  , column: 0
-  , row: 0
-  , bounds: { x: 0, y: 0, width: size, height: size }
-  }
-  where
-    size = Int.pow 2 level
-
-mkTileState :: Number -> ImagePyramidTileState
-mkTileState alpha = ImagePyramidTileState { alpha }
-
 initialState :: State
-initialState =
+initialState = State
   { image: testImage
-  , tiles:
-      Map.insert (ImagePyramidTile {level: 7, column: 0, row: 0, bounds: {x: 0, y: 0, width: 64, height: 64}}) (mkTileState 0.0) $
-      Map.insert (ImagePyramidTile {level: 7, column: 1, row: 0, bounds: {x: 66, y: 0, width: 64, height: 64}}) (mkTileState 0.0) $
-      Map.insert (ImagePyramidTile {level: 7, column: 0, row: 1, bounds: {x: 0, y: 66, width: 64, height: 64}}) (mkTileState 0.0) $
-      Map.insert (ImagePyramidTile {level: 7, column: 1, row: 1, bounds: {x: 66, y: 66, width: 88, height: 88}}) (mkTileState 0.0) $
-      Map.insert (mkTile 6) (mkTileState 0.0) $
-      Map.insert (mkTile 5) (mkTileState 0.0) $
-      Map.insert (mkTile 4) (mkTileState 0.0) $
-      Map.insert (mkTile 3) (mkTileState 0.0) $
-      Map.insert (mkTile 2) (mkTileState 0.0) $
-      Map.insert (mkTile 1) (mkTileState 0.0) $
-      Map.insert (mkTile 0) (mkTileState 0.0) Map.empty
+  , tiles:  Map.empty
   , activeTiles: []
   , lastRenderTimestamp: 0.0
   , targetLevel: 0
@@ -109,21 +96,37 @@ scene =
   , color: black
   }
 
-data Action = Render Number
+data Action =
+    Render Number
+  | LoadTile ImagePyramidTile
+  | None
 
-update :: State -> Action -> State
-update state action = case action of
+update :: State -> Action -> Tuple State Action
+update (State state) action = case action of
   Render timestamp ->
     let (ImagePyramid image) = state.image
         activeTiles = getActiveTiles scene state.image state.tiles
+        uncachedTiles = getUncachedTiles state.tiles activeTiles
         tiles' = Map.mapWithKey (updateAlpha timestamp activeTiles) state.tiles
+        nextAction = case head uncachedTiles of
+          Just t -> LoadTile t
+          Nothing -> None
     in
     -- traceAny activeTiles \_ ->
-    state { activeTiles = activeTiles
-          , lastRenderTimestamp = timestamp
-          , tiles = tiles'
-          }
+    Tuple (State $
+           state { activeTiles = activeTiles
+                 , lastRenderTimestamp = timestamp
+                 , tiles = tiles'
+                 }
+          ) nextAction
+  LoadTile tile ->
+    Tuple (State $ state { tiles = Map.insert tile initialTileState state.tiles }) None
+  None ->
+    Tuple (State state) None
   where
+    initialTileState :: ImagePyramidTileState
+    initialTileState = ImagePyramidTileState { alpha: 0.0, image: Just true }
+
     updateAlpha :: Number ->
                    Array ImagePyramidTile ->
                    ImagePyramidTile ->
@@ -131,11 +134,11 @@ update state action = case action of
                    ImagePyramidTileState
     updateAlpha timestamp tiles tile t@(ImagePyramidTileState tileState) =
       let dt = timestamp - state.lastRenderTimestamp
-          alpha = case elemIndex tile tiles of
+          alpha' = case elemIndex tile tiles of
             (Just _) -> clamp 0.0 1.0 (tileState.alpha + dt / tileBlendDuration)
             _ -> tileState.alpha
       in
-      ImagePyramidTileState { alpha }
+      ImagePyramidTileState (tileState { alpha = alpha' })
 
 render :: forall eff. C.Context2D -> State -> Eff (canvas :: CANVAS | eff) Unit
 render context state = do
@@ -150,7 +153,7 @@ clearCanvas ctx = do
   pure unit
 
 drawImagePyramid :: forall eff. C.Context2D -> State -> Eff (canvas :: CANVAS | eff) Unit
-drawImagePyramid ctx state = do
+drawImagePyramid ctx (State state) = do
     let (ImagePyramid image) = state.image
     foreachE state.activeTiles \t@(ImagePyramidTile tile) -> do
       case { level: image.levels !! tile.level, tile: Map.lookup t state.tiles } of
