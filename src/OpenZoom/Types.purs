@@ -4,8 +4,8 @@ import Prelude
 
 import Color (Color, hsl, rgb)
 import Data.Array ((!!), (..))
-import Data.Maybe (Maybe(Just, Nothing))
 import Data.Int as Int
+import Data.Maybe (Maybe(Just, Nothing))
 import Math as Math
 
 -- TODO: Add constructor functions and hide constructors:
