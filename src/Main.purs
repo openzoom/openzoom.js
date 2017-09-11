@@ -171,7 +171,6 @@ drawImagePyramid ctx (State state) = do
                 , h: scale * Int.toNumber tile.bounds.height
                 }
           -- Label
-          _ <- C.setGlobalAlpha ctx 1.0
           _ <- C.setFont "18px sans-serif" ctx
           _ <- C.setFillStyle (toHexString (complementary level.color)) ctx
           _ <- C.fillText ctx (toLabel t)
