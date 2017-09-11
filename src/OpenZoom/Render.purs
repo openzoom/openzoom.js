@@ -63,8 +63,13 @@ isSingleTileLevel (ImagePyramidLevel level) =
 
 getTilesForLevel :: ImagePyramid -> ImagePyramidLevel -> Array ImagePyramidTile
 getTilesForLevel p (ImagePyramidLevel level) =
-  (flip concatMap) (0..(level.numColumns - 1)) \column ->
-    (flip mapMaybe) (0..(level.numRows - 1)) \row ->
+  let columns = 0..(level.numColumns - 1)
+      rows = 0..(level.numRows - 1)
+      forConcat = flip concatMap
+      forMaybe = flip mapMaybe
+  in
+  forConcat columns \column ->
+    forMaybe rows \row ->
       case getTileBounds p level.index column row of
         Just bounds ->
           Just $ ImagePyramidTile
