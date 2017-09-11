@@ -49,7 +49,7 @@ getActiveTiles scene pyramid@(ImagePyramid image) tiles =
       in
       case anyTransparent of
         true -> levelTiles
-        false  -> levelTiles <> go s p ls ts
+        false -> levelTiles <> go s p ls ts
 
     isTransparent :: ImagePyramidTileStates -> ImagePyramidTile ->  Boolean
     isTransparent ts tile =
