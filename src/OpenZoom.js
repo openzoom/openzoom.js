@@ -68,7 +68,7 @@ const LEVELS = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
 LEVELS.forEach((level) => {
   const image = new Image()
-  image.src = `http://content.zoomhub.net/dzis/8_files/${level}/0_0.jpg`
+  image.src = `http://cache.zoomhub.net/content/0w5YD_files/${level}/0_0.jpg`
   image.onload = () => {
     const newState = update(getState(), {
       type: "imageLoaded",
