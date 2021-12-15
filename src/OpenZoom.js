@@ -16,26 +16,26 @@ const clamp = (value, min, max) => {
 
 // --- Setup -------------------------------------------------------------------
 
-const scene = document.getElementById('image')
+const scene = document.getElementById("image")
 
 if (!(scene instanceof HTMLCanvasElement)) {
-  throw new Error('`scene` must be a <canvas>')
+  throw new Error("`scene` must be a <canvas>")
 }
 
-const context: ?CanvasRenderingContext2D = scene.getContext('2d')
+const context: ?CanvasRenderingContext2D = scene.getContext("2d")
 
 if (!context) {
-  throw new Error('Couldn’t instantiate canvas context.')
+  throw new Error("Couldn’t instantiate canvas context.")
 }
 
-context.fillStyle = 'black'
+context.fillStyle = "black"
 context.fillRect(0, 0, scene.width, scene.height)
 
 // --- State -------------------------------------------------------------------
 
 const history = []
 let state = {
-  levels: [],
+  levels: []
 }
 
 const getState = () => state
@@ -46,13 +46,13 @@ const setState = (newState) => {
 
 const update = (currentState, action) => {
   switch (action.type) {
-    case 'imageLoaded': {
-      const {image, level: levelIndex} = action.payload
+    case "imageLoaded": {
+      const { image, level: levelIndex } = action.payload
       const newLevels = [...currentState.levels]
       const level = currentState.levels[levelIndex] || {}
-      newLevels[levelIndex] = {...level, image, loaded: true}
+      newLevels[levelIndex] = { ...level, image, loaded: true }
 
-      return {...currentState, levels: newLevels}
+      return { ...currentState, levels: newLevels }
     }
 
     default:
@@ -71,8 +71,8 @@ LEVELS.forEach((level) => {
   image.src = `http://content.zoomhub.net/dzis/8_files/${level}/0_0.jpg`
   image.onload = () => {
     const newState = update(getState(), {
-      type: 'imageLoaded',
-      payload: {image, level},
+      type: "imageLoaded",
+      payload: { image, level }
     })
     setState(newState)
   }
@@ -91,8 +91,7 @@ const step = (timestamp) => {
 
   const elapsedTime = timestamp - lastTimestamp
   const isLevelLoaded =
-    state.levels[levelIndex] &&
-    state.levels[levelIndex].loaded
+    state.levels[levelIndex] && state.levels[levelIndex].loaded
 
   if (isLevelLoaded) {
     const levelImage = state.levels[levelIndex].image
