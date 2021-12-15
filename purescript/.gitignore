@@ -1,0 +1,12 @@
+# PureScript
+/bower_components/
+/node_modules/
+/.pulp-cache/
+/output/
+/generated-docs/
+/.psc*
+/.purs*
+/.psa*
+
+# Sublime Text
+*.sublime-workspace
