@@ -1,0 +1,21 @@
+{
+  "folders": [
+    {
+      "follow_symlinks": true,
+      "path": ".",
+      "file_exclude_patterns": [
+        ".psa*",
+        ".psc*",
+        ".purs*"
+      ],
+      "folder_exclude_patterns": [
+        ".psci_modules",
+        ".pulp-cache",
+        "bower_components",
+        "generated-docs",
+        "node_modules",
+        "output"
+      ]
+    }
+  ]
+}
