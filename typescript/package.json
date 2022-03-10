@@ -27,5 +27,7 @@
     "snowpack": "^3.8.8",
     "typescript": "^4.5.4"
   },
-  "dependencies": {}
+  "dependencies": {
+    "twgl.js": "^4.21.2"
+  }
 }
