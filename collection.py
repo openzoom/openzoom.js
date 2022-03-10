@@ -3,7 +3,6 @@
 
 import deepzoom
 
-# Create Deep Zoom Image creator with weird parameters
 creator = deepzoom.ImageCreator()
 
 # Create Deep Zoom image pyramid from source
