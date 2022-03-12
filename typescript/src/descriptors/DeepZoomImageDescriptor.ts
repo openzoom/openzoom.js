@@ -75,8 +75,8 @@ export class DeepZoomImageDescriptor {
   private getSize(level: number): Point {
     var size: Point = new Point()
     var scale: number = this.getScale(level)
-    size.x = Math.ceil(width * scale)
-    size.y = Math.ceil(height * scale)
+    size.x = Math.ceil(this.width * scale)
+    size.y = Math.ceil(this.height * scale)
 
     return size
   }
