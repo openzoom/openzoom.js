@@ -104,13 +104,7 @@ function main() {
 
   var textureInfos = [
     loadImageAndCreateTextureInfo(
-      "https://cache.zoomhub.net/content/0w5YD_files/8/0_0.jpg"
-    ),
-    loadImageAndCreateTextureInfo(
-      "https://cache.zoomhub.net/content/0w5YD_files/7/0_0.jpg"
-    ),
-    loadImageAndCreateTextureInfo(
-      "https://cache.zoomhub.net/content/0w5YD_files/6/0_0.jpg"
+      "https://zoomhub-showcase.s3.amazonaws.com/ecommerce/watches/2022-02-01-1/images/collection_files/7/0_0.jpg"
     )
   ]
 
