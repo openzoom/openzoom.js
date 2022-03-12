@@ -149,7 +149,7 @@ function main() {
 
     gl.clear(gl.COLOR_BUFFER_BIT)
 
-    drawInfos.forEach(function (drawInfo) {
+    drawInfos.forEach((drawInfo) =>
       drawImage(
         drawInfo.textureInfo.texture,
         drawInfo.textureInfo.width,
@@ -157,7 +157,7 @@ function main() {
         drawInfo.x,
         drawInfo.y
       )
-    })
+    )
   }
 
   let then = 0
